@@ -1,3 +1,4 @@
+// Copyright 2021 Baklanov
 #include "TimedDoor.h"
 #include <iostream>
 #include <string>
