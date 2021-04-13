@@ -39,7 +39,7 @@ class TimedDoor : public Door {
      explicit TimedDoor(int a):
      iTimeout(a), opened(true) {
          adapter = new DoorTimerAdapter(this);
-     };
+     }
      bool isDoorOpened() { return opened; }
     void unlock();
     void lock();
@@ -53,7 +53,7 @@ class Timer {
     void sleep(int);
 
  public:
-     Timer(TimerClient* client_) :
+     explicit Timer(TimerClient* client_) :
          client(client_) {}
     void tregister(int, TimerClient*);
 };
