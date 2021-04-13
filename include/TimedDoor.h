@@ -1,19 +1,36 @@
-// Copyright 2021 Baklanov 
-#ifndef INCLUDE_TIMEDOOR_H_
-#define INCLUDE_TIMEDOOR_H_
+// Copyright 2021 Baklanov
+#ifndef INCLUDE_TIMEDDOOR_H_
+#define INCLUDE_TIMEDDOOR_H_
 
 #include <ctime>
 
-enum class doorState {OPEN,CLOSE};
+class DoorTimerAdapter;
+class Timer;
+class Door;
+class TimedDoor;
+
+class TimerClient {
+public:
+    virtual void Timeout() = 0;
+};
+
+class Door {
+public:
+    virtual void lock() = 0;
+    virtual void unlock() = 0;
+    virtual bool isDoorOpened() = 0;
+};
+
+enum class doorState {OPEN, CLOSE};
 
 class TimedDoor;
 
 class DoorTimeAdapter {
-private:
+ private:
     doorState state;
 
-public:
-    DoorTimeAdapter():
+ public:
+    explicit DoorTimeAdapter():
     state(doorState::CLOSE) {}
     void Timeout(TimedDoor* door);
     doorState getState() { return state; };
@@ -25,12 +42,13 @@ class TimedDoor {
      DoorTimeAdapter* adapter;
 
  public:
-     TimedDoor(DoorTimeAdapter* a) :
+     explicit TimedDoor(DoorTimeAdapter* a) :
          adapter(a) {}
      doorState getState() { return adapter->getState(); };
-     void open();
-     void close();
+     void unlock();
+     void lock();
      void doorTimeOut();
+     bool isDoorOpened();
      doorState throwState() { throw adapter->getState(); }
 };
 
@@ -47,7 +65,8 @@ class Timer {
          }
          adapter->Timeout(door);
      }
-
+     TimerClient* client;
+     void sleep(int);
+     void tregister(int, TimerClient*);
 };
-
-#endif // INCLUDE_TIMEDOOR_H_
+#endif  // INCLUDE_TIMEDDOOR_H_
