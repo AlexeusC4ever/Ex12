@@ -1,27 +1,49 @@
-// Copyright 2021 Baklanov
 #include "TimedDoor.h"
 #include <iostream>
-
-void DoorTimeAdapter::Timeout(TimedDoor* door) {
-    door->doorTimeOut();
-}
+#include <string>
+#include <ctime>
 
 void TimedDoor::unlock() {
-    adapter->setState(doorState::OPEN);
-    Timer a(this->adapter, this);
+    opened = true;
+    Timer* a = new Timer(this->adapter);
+    a->tregister(this->iTimeout, adapter);
 }
 
 void TimedDoor::lock() {
-    adapter->setState(doorState::CLOSE);
+    opened = false;
 }
 
-void TimedDoor::doorTimeOut() {
+void Timer::sleep(int Time) {
+    time_t a = time(nullptr);
+    while (time(nullptr) - a < Time) {
+        continue;
+    }
+}
+
+void Timer::tregister(int timeout, TimerClient* client) {
+    sleep(timeout);
+    client->Timeout();
+}
+
+void TimedDoor::DoorTimeOut() {
     try {
-        this->throwState();
+        if (opened) throw std::string("Close the door!");
     }
-    catch (doorState a) {
-        if (a == doorState::OPEN) {
-            std::cout << "close the door!" << std::endl;
-        }
+    catch (const std::string mes) {
+        std::cout << mes << std::endl;
     }
+}
+
+void TimedDoor::throwState() {
+    try {
+        if (opened) throw std::string("the door is opened!");
+        throw std::string("the door is closed!");
+    }
+    catch (std::string mes) {
+        std::cout << mes << std::endl;
+    }
+}
+
+void DoorTimerAdapter::Timeout() {
+    this->door->DoorTimeOut();
 }
