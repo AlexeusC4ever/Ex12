@@ -2,71 +2,59 @@
 #ifndef INCLUDE_TIMEDDOOR_H_
 #define INCLUDE_TIMEDDOOR_H_
 
-#include <ctime>
-
 class DoorTimerAdapter;
 class Timer;
 class Door;
 class TimedDoor;
 
 class TimerClient {
-public:
+ public:
     virtual void Timeout() = 0;
 };
 
 class Door {
-public:
+ public:
     virtual void lock() = 0;
     virtual void unlock() = 0;
     virtual bool isDoorOpened() = 0;
 };
 
-enum class doorState {OPEN, CLOSE};
-
-class TimedDoor;
-
-class DoorTimeAdapter {
+class DoorTimerAdapter : public TimerClient {
  private:
-    doorState state;
+    TimedDoor* door;
 
  public:
-    explicit DoorTimeAdapter():
-    state(doorState::CLOSE) {}
-    void Timeout(TimedDoor* door);
-    doorState getState() { return state; };
-    void setState(doorState state_) { state = state_; }
+     explicit DoorTimerAdapter(TimedDoor* door_) :
+         door(door_) {}
+    void Timeout() override;
 };
 
-class TimedDoor {
- protected:
-     DoorTimeAdapter* adapter;
+class TimedDoor : public Door {
+ private:
+    DoorTimerAdapter* adapter;
+    int iTimeout;
+    bool opened;
 
  public:
-     explicit TimedDoor(DoorTimeAdapter* a) :
-         adapter(a) {}
-     doorState getState() { return adapter->getState(); };
-     void unlock();
-     void lock();
-     void doorTimeOut();
-     bool isDoorOpened();
-     doorState throwState() { throw adapter->getState(); }
+     explicit TimedDoor(int a):
+     iTimeout(a), opened(true) {
+         adapter = new DoorTimerAdapter(this);
+     };
+     bool isDoorOpened() { return opened; }
+    void unlock();
+    void lock();
+    void DoorTimeOut();
+    void throwState();
 };
 
 class Timer {
  private:
-     DoorTimeAdapter* adapter;
+    TimerClient* client;
+    void sleep(int);
 
  public:
-     Timer(DoorTimeAdapter* adapter_, TimedDoor* door) :
-         adapter(adapter_) {
-         time_t start = time(nullptr);
-         while (time(nullptr) - start < 8) {
-             continue;
-         }
-         adapter->Timeout(door);
-     }
-     TimerClient* client;
-     void sleep(int);
-     void tregister(int, TimerClient*);
+     Timer(TimerClient* client_) :
+         client(client_) {}
+    void tregister(int, TimerClient*);
 };
 #endif  // INCLUDE_TIMEDDOOR_H_
